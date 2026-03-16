@@ -1,4 +1,5 @@
 # Imports
+
 import os
 import time
 import random
@@ -7,14 +8,44 @@ import random
 
 game_phase = 1
 progress = 0
+inventory = []
+plane_loop = True
 
 # Constant Variables
+Items = ["Propeller", "Seat", "Key", "Fuel Can", "Bones"]
 
 
 # Functions
 
+
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def damaged_plane():
+    while plane_loop:
+        if "Propeller" in inventory:
+            print("You realise you have a spare propeller to fix the plane! ")
+            return
+        clear_console()
+        found_items = random.sample(Items, 3)  # Grabs 3 random items for the user to choose from
+        print("You have crashed on an island! \n")
+        print(f"You have found {found_items} \n")
+        try:
+            item_saved = int(input("What do you do? 1,2,3: "))
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+            return
+        if item_saved not in ("1", "2", "3"):
+            print("Invalid input. Please enter a number.")
+            return
+        inventory.append(found_items[item_saved - 1])  # Saves the item in the inventory
+        print(f"{found_items[item_saved - 1]} was saved in your inventory!")
+        if "Propeller" in inventory:
+            print("You use the spare propeller to fix the plane! ")
+            return
+        else:
+            print("You dont have an item to fix the plane, you search again")
 
 
 def problem_game(gamephase):
@@ -26,55 +57,56 @@ def problem_game(gamephase):
         print("2. Try to retract it manually. \n")
         print("3. Try to fix it with the tools in the cockpit. \n")
         try:
-            answer = input("What do you do? 1,2,3: ")
+            input_one = int(input("What do you do? 1,2,3: "))
         except ValueError:
             print("Invalid input. Please enter a number.")
-            return(1)
-        if answer not in ("1", "2", "3"):
+            return 1
+        if input_one not in ("1", "2", "3"):
             print("Invalid input. Please enter a number.")
-            return(1)
-        if answer == "1":
+            return 1
+        if input_one == "1":
             print("You ignore the problem, and continue flying. \n")
             time.sleep(3)
             clear_console()
-            return(1)
-        elif answer == "2":
+            return 1
+        elif input_one == "2":
             print("You try to retract the landing gear manually, but it doesn't work. \n")
             time.sleep(3)
             clear_console()
-            return(1)
-        elif answer == "3":
+            return 1
+        elif input_one == "3":
             print("You try to fix the problem with the tools in the cockpit, and the gear retracts. \n")
             time.sleep(3)
             clear_console()
-            return(0)
+            return 0
     elif gamephase == 2:
         random_number = random.randint(1, 5)
         if random_number == 1:
             print("You encounter a storm, and your plane is damaged. \n")
             time.sleep(3)
             clear_console()
-            return(1)
+            return 1
         elif random_number == 2:
             print("You encounter turbulence, and your plane is damaged. \n")
             time.sleep(3)
             clear_console()
-            return(1)
+            return 1
         elif random_number == 3:
             print("You encounter a flock of birds, and your plane is damaged. \n")
             time.sleep(3)
             clear_console()
-            return(1)
+            return 1
         elif random_number == 4:
             print("You encounter a mountain, and your plane is damaged. \n")
             time.sleep(3)
             clear_console()
-            return(1)
+            return 1
         elif random_number == 5:
             print("You encounter a clear sky. Your Plane is not damaged. \n")
             time.sleep(3)
             clear_console()
-            return(0)
+            return 0
+
 
 # loops
 while True:
@@ -87,10 +119,11 @@ while True:
         print("Okay! Hope your ready next time!")
         time.sleep(3)
         continue
+    clear_console()
     print("Here are the controls:\n")
     print("You will be using the numbers 1,2,3,4,5 to choose your path.")
     print("Use 'A' and 'D' when prompted!")
-    time.sleep(3)
+    time.sleep(7)
     clear_console()
     print("You are in the cockpit of your plane, you are ready to take off! \n")
     time.sleep(3)
@@ -100,14 +133,11 @@ while True:
         print("Your plane is damaged, and you have to land. \n")
         time.sleep(3)
         clear_console()
+        damaged_plane()
+
     elif problem_value == 0:
         print("You continue flying, and you are doing well! \n")
         time.sleep(3)
         progress += 5
         print(f"You have now traveled {progress}% of the world!\n")
         clear_console()
-    
-
-
-
-
