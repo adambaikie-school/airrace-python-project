@@ -1,13 +1,16 @@
+# Imports
+
 import os
 import random
 import time
 
-
+# Constants and Data
 WORLD_PROGRESS = 100
 LEG_PROGRESS = 10
-TRAVEL_DAYS_PER_LEG = 1
+TRAVEL_DAYS_PER_LEG = 2
 SEARCH_CHOICES = 3
 
+# Each repair problem links a type of damage to the item needed to fix it.
 REPAIR_PROBLEMS = {
     "landing_gear": {
         "problem": "Your landing gear jams and will not retract.",
@@ -36,6 +39,7 @@ REPAIR_PROBLEMS = {
     },
 }
 
+# Items that can appear while searching for plane parts.
 SEARCH_ITEM_POOL = [
     "Tool Kit",
     "Propeller",
@@ -51,6 +55,7 @@ SEARCH_ITEM_POOL = [
     "Bones",
 ]
 
+# Takeoff choices decide whether the player causes a landing gear problem.
 TAKEOFF_CHOICES = {
     1: {
         "message": "You ignore the warning light and keep climbing.",
@@ -66,6 +71,7 @@ TAKEOFF_CHOICES = {
     },
 }
 
+# Random flight events can either damage the plane or let the player continue safely.
 AIR_EVENTS = [
     {
         "message": "A flock of birds dives into your flight path.",
@@ -93,6 +99,7 @@ AIR_EVENTS = [
     },
 ]
 
+# Functions
 
 def clear_console():
     os.system("cls" if os.name == "nt" else "clear")
@@ -108,6 +115,7 @@ def pause_and_clear(seconds=2):
 
 
 def prompt_number(prompt, valid_choices):
+    # Keep asking until the player enters one of the allowed numbers.
     while True:
         try:
             choice = int(input(prompt))
@@ -185,12 +193,14 @@ def handle_air_event():
 
 
 def choose_flight_problem():
-    if random.random() < 0.35:
+    # Sometimes the danger happens during takeoff, otherwise it happens mid-flight.
+    if random.random() < 0.5:
         return handle_takeoff_problem()
     return handle_air_event()
 
 
 def get_search_options(required_item):
+    # The correct repair item only appears some of the time, which can push repairs into the next day.
     other_items = [item for item in SEARCH_ITEM_POOL if item != required_item]
 
     if random.random() < 0.5:
@@ -224,6 +234,7 @@ def search_for_repair_item(problem_data, inventory, day):
         print(f"\nYou save the {saved_item}.")
 
         if saved_item == required_item:
+            # Remove the part once it is used so the player has to find it again next time.
             inventory.remove(required_item)
             print(problem_data["repair_text"])
             pause_and_clear(3)
@@ -245,6 +256,7 @@ def repair_plane(damage_key, inventory, day):
     pause(3)
 
     if required_item in inventory:
+        # Let the player use a spare part they found on an earlier day.
         print(f"You already have a {required_item} in your inventory.")
         inventory.remove(required_item)
         print(problem_data["repair_text"])
@@ -270,6 +282,7 @@ def play_game():
     day = 1
     inventory = []
 
+    # Keep flying new legs until the trip around the world is complete.
     while progress < WORLD_PROGRESS:
         clear_console()
         show_status(day, progress, inventory)
@@ -292,6 +305,7 @@ def main():
     if show_intro():
         play_game()
 
+# Game loop
 
 if __name__ == "__main__":
     main()
