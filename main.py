@@ -234,16 +234,252 @@ def search_for_repair_item(problem_data, inventory, day):
         print(f"\nYou save the {saved_item}.")
 
         if saved_item == required_item:
-            # Remove the part once it is used so the player has to find it again next time.
+            # Found the required item! Now play a mini game to use it.
             inventory.remove(required_item)
-            print(problem_data["repair_text"])
-            pause_and_clear(3)
-            return day
+            result_day = attempt_repair_with_game(problem_data, day)
+            
+            # If repair succeeded, we're done
+            if result_day is not None:
+                return result_day
+            
+            # If repair failed (result_day is None), tool broke - search again tomorrow
+            day += 1
+            print("You wait until the next day and search again.")
+            pause(3)
+            continue
 
         print("That will not fix the plane today.")
         print("You wait until the next day and search again.")
         day += 1
         pause(3)
+
+
+def attempt_repair_with_game(problem_data, day):
+    """Play a mini game to repair the plane with the found tool. One try only!
+    Returns day if successful, None if game was lost."""
+    clear_console()
+    print(f"You found the {problem_data['required_item']}!\n")
+    print("Now you must use it correctly. You only get ONE chance.\n")
+    pause(2)
+    
+    games = [play_tic_tac_toe, play_unscramble, play_math_puzzle, play_memory_game, play_reaction_test]
+    game = random.choice(games)
+    
+    clear_console()
+    if game():
+        # Game won - repair succeeds
+        print(problem_data["repair_text"])
+        pause_and_clear(3)
+        return day
+    else:
+        # Game lost - tool breaks
+        print("Your tool breaks! You'll have to search for another part tomorrow.\n")
+        pause(2)
+        return None
+
+
+def play_tic_tac_toe():
+    """Simple tic tac toe. Player is X, AI is O. Returns True if player wins."""
+    board = [" " for _ in range(9)]
+    
+    def print_board():
+        print("\n   1   2   3")
+        print(f" 1  {board[0]} | {board[1]} | {board[2]}")
+        print("   -----------")
+        print(f" 2  {board[3]} | {board[4]} | {board[5]}")
+        print("   -----------")
+        print(f" 3  {board[6]} | {board[7]} | {board[8]}\n")
+    
+    def check_winner(player):
+        wins = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ]
+        return any(board[i] == board[j] == board[k] == player for i, j, k in wins)
+    
+    def get_ai_move():
+        # AI tries to win, then blocks player, then takes center, then corners
+        for i in range(9):
+            if board[i] == " ":
+                board[i] = "O"
+                if check_winner("O"):
+                    return
+                board[i] = " "
+        
+        for i in range(9):
+            if board[i] == " ":
+                board[i] = "X"
+                if check_winner("X"):
+                    board[i] = "O"
+                    return
+                board[i] = " "
+        
+        if board[4] == " ":
+            board[4] = "O"
+            return
+        
+        corners = [0, 2, 6, 8]
+        available_corners = [i for i in corners if board[i] == " "]
+        if available_corners:
+            board[random.choice(available_corners)] = "O"
+            return
+        
+        for i in range(9):
+            if board[i] == " ":
+                board[i] = "O"
+                return
+    
+    print("Welcome to Tic Tac Toe! You are X, AI is O. Choose your position (1-9).\n")
+    
+    while True:
+        print_board()
+        
+        # Player move
+        while True:
+            try:
+                pos = int(input("Your move (1-9): ")) - 1
+                if 0 <= pos <= 8 and board[pos] == " ":
+                    board[pos] = "X"
+                    break
+                print("Invalid move!")
+            except ValueError:
+                print("Enter a number 1-9.")
+        
+        if check_winner("X"):
+            print_board()
+            print("You won! Your tool is repaired perfectly!\n")
+            return True
+        
+        if " " not in board:
+            print_board()
+            print("It's a draw! Your tool breaks from the stress of the repair.\n")
+            return False
+        
+        # AI move
+        get_ai_move()
+        
+        if check_winner("O"):
+            print_board()
+            print("AI won! Your tool breaks during the repair attempt.\n")
+            return False
+        
+        if " " not in board:
+            print_board()
+            print("It's a draw! Your tool breaks from the stress of the repair.\n")
+            return False
+
+
+def play_unscramble():
+    """Unscramble letters game. Returns True if player guesses correctly."""
+    words = ["ENGINE", "PROPELLER", "WING", "FUEL", "HYDRAULIC", "AIRCRAFT", "TURBINE", "LANDING", "REPAIR"]
+    word = random.choice(words)
+    scrambled = list(word)
+    random.shuffle(scrambled)
+    
+    print(f"Unscramble the letters to fix your plane correctly!")
+    print(f"Scrambled: {''.join(scrambled)}")
+    print(f"Hint: The word has {len(word)} letters.\n")
+    
+    guess = input("Your guess (or 'hint' for hint): ").upper().strip()
+    
+    if guess == "hint":
+        print(f"Hint: This is related to aircraft maintenance.")
+        guess = input("Your guess: ").upper().strip()
+    
+    if guess == word:
+        print(f"Correct! The word is '{word}'. Your repair is successful!\n")
+        return True
+    else:
+        print(f"Wrong! The word was '{word}'. Your tool breaks from frustration.\n")
+        return False
+
+
+def play_math_puzzle():
+    """Solve a quick math problem. Returns True if correct."""
+    num1 = random.randint(10, 50)
+    num2 = random.randint(5, 20)
+    operations = [
+        (f"{num1} + {num2}", num1 + num2),
+        (f"{num1} - {num2}", num1 - num2),
+        (f"{num1} * {num2}", num1 * num2),
+        (f"{num1} / {num2}", num1 // num2),
+    ]
+    
+    problem, answer = random.choice(operations)
+    
+    print("Quick! Solve this math problem to calibrate your tools:")
+    print(f"{problem} = ?\n")
+    
+    try:
+        guess = int(input("Your answer: "))
+        if guess == answer:
+            print(f"Correct! {problem} = {answer}. Your repair is successful!\n")
+            return True
+        else:
+            print(f"Wrong! {problem} = {answer}. Your tool breaks from the mistake.\n")
+            return False
+    except ValueError:
+        print("Invalid input! Your tool breaks while you fumble around.\n")
+        return False
+
+
+def play_memory_game():
+    """Memory sequence game. Returns True if player repeats the sequence."""
+    sequence = []
+    
+    print("Memory Game! Watch the sequence of numbers:")
+    print("(Press Enter to start)\n")
+    input()
+    
+    for round_num in range(1, 4):
+        sequence.append(random.randint(1, 9))
+        print(f"Round {round_num}: {' -> '.join(map(str, sequence))}")
+        pause(2)
+        clear_console()
+        
+        guess = input(f"Repeat the sequence (separated by spaces): ").strip().split()
+        
+        try:
+            guess = [int(x) for x in guess]
+            if guess == sequence:
+                print("Correct!\n")
+                pause(1)
+                clear_console()
+            else:
+                print(f"Wrong! The sequence was {' -> '.join(map(str, sequence))}. Your tool breaks.\n")
+                return False
+        except ValueError:
+            print("Invalid input! Your tool breaks.\n")
+            return False
+    
+    print("Perfect! You remembered the entire sequence. Your repair is successful!\n")
+    return True
+
+
+def play_reaction_test():
+    """Type the word before time runs out. Returns True if fast enough."""
+    words = ["AIRCRAFT", "TURBINE", "REPAIR", "PROPELLER", "LANDING", "FUEL", "ENGINE"]
+    word = random.choice(words)
+    
+    print("Reaction Test! Type this word as fast as you can:")
+    print(f"\n{word}\n")
+    print("Type it now (GO!):")
+    
+    import time
+    start = time.time()
+    guess = input().upper().strip()
+    elapsed = time.time() - start
+    
+    if guess == word and elapsed < 5:
+        print(f"Excellent! You typed it in {elapsed:.2f} seconds. Your repair is successful!\n")
+        return True
+    elif guess == word:
+        print(f"Too slow! You took {elapsed:.2f} seconds. Your tool breaks.\n")
+        return False
+    else:
+        print(f"Wrong word! Your tool breaks.\n")
+        return False
 
 
 def repair_plane(damage_key, inventory, day):
@@ -259,11 +495,13 @@ def repair_plane(damage_key, inventory, day):
         # Let the player use a spare part they found on an earlier day.
         print(f"You already have a {required_item} in your inventory.")
         inventory.remove(required_item)
-        print(problem_data["repair_text"])
-        pause_and_clear(3)
-        return day
+        print("Now you must use it correctly to repair the plane.\n")
+        pause(1)
+        return attempt_repair_with_game(problem_data, day)
 
+    # Must search for the required item first
     return search_for_repair_item(problem_data, inventory, day)
+
 
 
 def complete_leg(progress, day):
@@ -272,6 +510,10 @@ def complete_leg(progress, day):
 
     print("You complete another leg of the trip.\n")
     print(f"You have now travelled {progress}% of the way around the world.")
+    print(f"You have {WORLD_PROGRESS - progress}% left to go.\n")
+    print("You Park the plane and rest for the day.\n")
+    time.sleep(3)
+    clear_console()
     print(f"It is now day {day}.\n")
     pause_and_clear(3)
     return progress, day
@@ -296,7 +538,7 @@ def play_game():
         progress, day = complete_leg(progress, day)
 
     clear_console()
-    print(f"You made it around the world in {day - 1} days!")
+    print(f"You made it around the world in {day - 1} days!") # type: ignore
     print("Your plane is battered, but you win the race.\n")
 
 
