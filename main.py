@@ -143,6 +143,7 @@ def show_status(day, progress, inventory):
     print(f"Day: {day}")
     print(f"Trip progress: {progress}% / {WORLD_PROGRESS}%")
     print(f"Inventory: {format_inventory(inventory)}\n")
+    time.sleep(7)
 
 
 def show_intro():
@@ -161,7 +162,7 @@ def show_intro():
     print("Controls:\n")
     print("Use numbers 1, 2, and 3 when choosing what to do.")
     print("Each flight leg adds progress, and the day counter keeps moving.\n")
-    pause_and_clear(6)
+    pause_and_clear(15)
     return True
 
 
@@ -255,8 +256,8 @@ def search_for_repair_item(problem_data, inventory, day):
 
 
 def attempt_repair_with_game(problem_data, day):
-    """Play a mini game to repair the plane with the found tool. One try only!
-    Returns day if successful, None if game was lost."""
+    # Play a mini game to repair the plane with the found tool. One try only!
+    # Returns day if successful, None if game was lost.
     clear_console()
     print(f"You found the {problem_data['required_item']}!\n")
     print("Now you must use it correctly. You only get ONE chance.\n")
@@ -279,7 +280,7 @@ def attempt_repair_with_game(problem_data, day):
 
 
 def play_tic_tac_toe():
-    """Simple tic tac toe. Player is X, AI is O. Returns True if player wins."""
+    # Simple tic tac toe. Player is X, AI is O. Returns True if player wins.
     board = [" " for _ in range(9)]
     
     def print_board():
@@ -371,7 +372,7 @@ def play_tic_tac_toe():
 
 
 def play_unscramble():
-    """Unscramble letters game. Returns True if player guesses correctly."""
+    # Unscramble letters game. Returns True if player guesses correctly.
     words = ["ENGINE", "PROPELLER", "WING", "FUEL", "HYDRAULIC", "AIRCRAFT", "TURBINE", "LANDING", "REPAIR"]
     word = random.choice(words)
     scrambled = list(word)
@@ -396,7 +397,7 @@ def play_unscramble():
 
 
 def play_math_puzzle():
-    """Solve a quick math problem. Returns True if correct."""
+    # Solve a quick math problem. Returns True if correct.
     num1 = random.randint(10, 50)
     num2 = random.randint(5, 20)
     operations = [
@@ -425,7 +426,7 @@ def play_math_puzzle():
 
 
 def play_memory_game():
-    """Memory sequence game. Returns True if player repeats the sequence."""
+    # Memory sequence game. Returns True if player repeats the sequence
     sequence = []
     
     print("Memory Game! Watch the sequence of numbers:")
@@ -458,7 +459,7 @@ def play_memory_game():
 
 
 def play_reaction_test():
-    """Type the word before time runs out. Returns True if fast enough."""
+    # Type the word before time runs out. Returns True if fast enough.
     words = ["AIRCRAFT", "TURBINE", "REPAIR", "PROPELLER", "LANDING", "FUEL", "ENGINE"]
     word = random.choice(words)
     
@@ -489,7 +490,7 @@ def repair_plane(damage_key, inventory, day):
     clear_console()
     print("Your plane is damaged and you have to land.\n")
     print(f"{problem_data['problem']}\n")
-    pause(3)
+    pause(7)
 
     if required_item in inventory:
         # Let the player use a spare part they found on an earlier day.
@@ -512,10 +513,10 @@ def complete_leg(progress, day):
     print(f"You have now travelled {progress}% of the way around the world.")
     print(f"You have {WORLD_PROGRESS - progress}% left to go.\n")
     print("You Park the plane and rest for the day.\n")
-    time.sleep(3)
+    time.sleep(7)
     clear_console()
     print(f"It is now day {day}.\n")
-    pause_and_clear(3)
+    pause_and_clear(7)
     return progress, day
 
 
