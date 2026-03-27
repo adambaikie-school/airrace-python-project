@@ -101,11 +101,12 @@ AIR_EVENTS = [
 
 # Functions
 
+
 def clear_console():
     os.system("cls" if os.name == "nt" else "clear")
 
 
-def pause(seconds=2):
+def pause(seconds):
     time.sleep(seconds)
 
 
@@ -195,13 +196,13 @@ def handle_air_event():
 
 def choose_flight_problem():
     # Sometimes the danger happens during takeoff, otherwise it happens mid-flight.
-    if random.random() < 0.5:
+    if random.random() < 0.1:
         return handle_takeoff_problem()
     return handle_air_event()
 
 
 def get_search_options(required_item):
-    # The correct repair item only appears some of the time, which can push repairs into the next day.
+    # The correct repair item only appears sometimes, which can push repairs into the next day.
     other_items = [item for item in SEARCH_ITEM_POOL if item != required_item]
 
     if random.random() < 0.5:
@@ -235,7 +236,7 @@ def search_for_repair_item(problem_data, inventory, day):
         print(f"\nYou save the {saved_item}.")
 
         if saved_item == required_item:
-            # Found the required item! Now play a mini game to use it.
+            # Found the required item! Now play a mini-game to use it.
             inventory.remove(required_item)
             result_day = attempt_repair_with_game(problem_data, day)
             
@@ -256,12 +257,13 @@ def search_for_repair_item(problem_data, inventory, day):
 
 
 def attempt_repair_with_game(problem_data, day):
-    # Play a mini game to repair the plane with the found tool. One try only!
+    # Play a mini-game to repair the plane with the found tool. One try only!
     # Returns day if successful, None if game was lost.
     clear_console()
     print(f"You found the {problem_data['required_item']}!\n")
     print("Now you must use it correctly. You only get ONE chance.\n")
-    pause(2)
+    print("(Press Enter to start)\n")
+    input()
     
     games = [play_tic_tac_toe, play_unscramble, play_math_puzzle, play_memory_game, play_reaction_test]
     game = random.choice(games)
@@ -280,7 +282,7 @@ def attempt_repair_with_game(problem_data, day):
 
 
 def play_tic_tac_toe():
-    # Simple tic tac toe. Player is X, AI is O. Returns True if player wins.
+    # Simple tic-tac-toe. Player is X, AI is O. Returns True if player wins.
     board = [" " for _ in range(9)]
     
     def print_board():
@@ -504,7 +506,6 @@ def repair_plane(damage_key, inventory, day):
     return search_for_repair_item(problem_data, inventory, day)
 
 
-
 def complete_leg(progress, day):
     progress += LEG_PROGRESS
     day += TRAVEL_DAYS_PER_LEG
@@ -539,7 +540,7 @@ def play_game():
         progress, day = complete_leg(progress, day)
 
     clear_console()
-    print(f"You made it around the world in {day - 1} days!") # type: ignore
+    print(f"You made it around the world in {day - 1} days!")  # type: ignore
     print("Your plane is battered, but you win the race.\n")
 
 
@@ -549,6 +550,7 @@ def main():
         play_game()
 
 # Game loop
+
 
 if __name__ == "__main__":
     main()
