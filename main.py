@@ -9,7 +9,8 @@ WORLD_PROGRESS = 100
 LEG_PROGRESS = 10
 TRAVEL_DAYS_PER_LEG = 2
 SEARCH_CHOICES = 3
-
+FULL_GAMES = ["play_tic_tac_toe", "play_unscramble", "play_math_puzzle", "play_memory_game", "play_reaction_test"]
+last_game = None
 # Each repair problem links a type of damage to the item needed to fix it.
 REPAIR_PROBLEMS = {
     "landing_gear": {
@@ -98,6 +99,7 @@ AIR_EVENTS = [
         "damage_key": None,
     },
 ]
+
 
 # Functions
 
@@ -214,7 +216,7 @@ def get_search_options(required_item):
     return options
 
 
-def search_for_repair_item(problem_data, inventory, day):
+def search_for_repair_item(problem_data, inventory, day, ):
     required_item = problem_data["required_item"]
 
     while True:
@@ -239,11 +241,11 @@ def search_for_repair_item(problem_data, inventory, day):
             # Found the required item! Now play a mini-game to use it.
             inventory.remove(required_item)
             result_day = attempt_repair_with_game(problem_data, day)
-            
+
             # If repair succeeded, we're done
             if result_day is not None:
                 return result_day
-            
+
             # If repair failed (result_day is None), tool broke - search again tomorrow
             day += 1
             print("You wait until the next day and search again.")
@@ -257,6 +259,7 @@ def search_for_repair_item(problem_data, inventory, day):
 
 
 def attempt_repair_with_game(problem_data, day):
+    global last_game
     # Play a mini-game to repair the plane with the found tool. One try only!
     # Returns day if successful, None if game was lost.
     clear_console()
@@ -264,10 +267,40 @@ def attempt_repair_with_game(problem_data, day):
     print("Now you must use it correctly. You only get ONE chance.\n")
     print("(Press Enter to start)\n")
     input()
-    
-    games = [play_tic_tac_toe, play_unscramble, play_math_puzzle, play_memory_game, play_reaction_test]
-    game = random.choice(games)
-    
+    games = {
+        "Tic Tac Toe": play_tic_tac_toe,
+        "Unscramble": play_unscramble,
+        "Math Puzzle": play_math_puzzle,
+        "Memory Game": play_memory_game,
+        "Reaction Test": play_reaction_test,
+    }
+
+    print(games)
+    if last_game is not None:
+        print(f"Last game played: {last_game}")
+
+        # Remove the last game from the pool so it can't be picked twice in a row
+        saved_function = games.pop(last_game)
+
+        # Pick a random game from the remaining pool
+        name, game_function = random.choice(list(games.items()))
+
+        # Put the removed game back in the dictionary so it can be picked NEXT time
+        games[last_game] = saved_function
+
+        # Update last_game to the new game we just picked
+        last_game = name
+
+        # Run the function we just picked!
+        game_function()
+
+    else:
+        # If no game was played yet, just pick a random one
+        name, game_function = random.choice(list(games.items()))
+        last_game = name
+        game_function()
+    time.sleep(8)
+
     clear_console()
     if game():
         # Game won - repair succeeds
@@ -284,7 +317,7 @@ def attempt_repair_with_game(problem_data, day):
 def play_tic_tac_toe():
     # Simple tic-tac-toe. Player is X, AI is O. Returns True if player wins.
     board = [" " for _ in range(9)]
-    
+
     def print_board():
         print("\n   1   2   3")
         print(f" 1  {board[0]} | {board[1]} | {board[2]}")
@@ -292,7 +325,7 @@ def play_tic_tac_toe():
         print(f" 2  {board[3]} | {board[4]} | {board[5]}")
         print("   -----------")
         print(f" 3  {board[6]} | {board[7]} | {board[8]}\n")
-    
+
     def check_winner(player):
         wins = [
             [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -300,7 +333,7 @@ def play_tic_tac_toe():
             [0, 4, 8], [2, 4, 6]
         ]
         return any(board[i] == board[j] == board[k] == player for i, j, k in wins)
-    
+
     def get_ai_move():
         # AI tries to win, then blocks player, then takes center, then corners
         for i in range(9):
@@ -309,7 +342,7 @@ def play_tic_tac_toe():
                 if check_winner("O"):
                     return
                 board[i] = " "
-        
+
         for i in range(9):
             if board[i] == " ":
                 board[i] = "X"
@@ -317,27 +350,27 @@ def play_tic_tac_toe():
                     board[i] = "O"
                     return
                 board[i] = " "
-        
+
         if board[4] == " ":
             board[4] = "O"
             return
-        
+
         corners = [0, 2, 6, 8]
         available_corners = [i for i in corners if board[i] == " "]
         if available_corners:
             board[random.choice(available_corners)] = "O"
             return
-        
+
         for i in range(9):
             if board[i] == " ":
                 board[i] = "O"
                 return
-    
+
     print("Welcome to Tic Tac Toe! You are X, AI is O. Choose your position (1-9).\n")
-    
+
     while True:
         print_board()
-        
+
         # Player move
         while True:
             try:
@@ -348,25 +381,25 @@ def play_tic_tac_toe():
                 print("Invalid move!")
             except ValueError:
                 print("Enter a number 1-9.")
-        
+
         if check_winner("X"):
             print_board()
             print("You won! Your tool is repaired perfectly!\n")
             return True
-        
+
         if " " not in board:
             print_board()
             print("It's a draw! Your tool breaks from the stress of the repair.\n")
             return False
-        
+
         # AI move
         get_ai_move()
-        
+
         if check_winner("O"):
             print_board()
             print("AI won! Your tool breaks during the repair attempt.\n")
             return False
-        
+
         if " " not in board:
             print_board()
             print("It's a draw! Your tool breaks from the stress of the repair.\n")
@@ -379,17 +412,17 @@ def play_unscramble():
     word = random.choice(words)
     scrambled = list(word)
     random.shuffle(scrambled)
-    
+
     print(f"Unscramble the letters to fix your plane correctly!")
     print(f"Scrambled: {''.join(scrambled)}")
     print(f"Hint: The word has {len(word)} letters.\n")
-    
+
     guess = input("Your guess (or 'hint' for hint): ").upper().strip()
-    
+
     if guess == "hint":
         print(f"Hint: This is related to aircraft maintenance.")
         guess = input("Your guess: ").upper().strip()
-    
+
     if guess == word:
         print(f"Correct! The word is '{word}'. Your repair is successful!\n")
         return True
@@ -408,12 +441,12 @@ def play_math_puzzle():
         (f"{num1} * {num2}", num1 * num2),
         (f"{num1} / {num2}", num1 // num2),
     ]
-    
+
     problem, answer = random.choice(operations)
-    
+
     print("Quick! Solve this math problem to calibrate your tools:")
     print(f"{problem} = ?\n")
-    
+
     try:
         guess = int(input("Your answer: "))
         if guess == answer:
@@ -430,19 +463,19 @@ def play_math_puzzle():
 def play_memory_game():
     # Memory sequence game. Returns True if player repeats the sequence
     sequence = []
-    
+
     print("Memory Game! Watch the sequence of numbers:")
     print("(Press Enter to start)\n")
     input()
-    
+
     for round_num in range(1, 4):
         sequence.append(random.randint(1, 9))
         print(f"Round {round_num}: {' -> '.join(map(str, sequence))}")
         pause(2)
         clear_console()
-        
+
         guess = input(f"Repeat the sequence (separated by spaces): ").strip().split()
-        
+
         try:
             guess = [int(x) for x in guess]
             if guess == sequence:
@@ -455,7 +488,7 @@ def play_memory_game():
         except ValueError:
             print("Invalid input! Your tool breaks.\n")
             return False
-    
+
     print("Perfect! You remembered the entire sequence. Your repair is successful!\n")
     return True
 
@@ -464,16 +497,16 @@ def play_reaction_test():
     # Type the word before time runs out. Returns True if fast enough.
     words = ["AIRCRAFT", "TURBINE", "REPAIR", "PROPELLER", "LANDING", "FUEL", "ENGINE"]
     word = random.choice(words)
-    
+
     print("Reaction Test! Type this word as fast as you can:")
     print(f"\n{word}\n")
     print("Type it now (GO!):")
-    
+
     import time
     start = time.time()
     guess = input().upper().strip()
     elapsed = time.time() - start
-    
+
     if guess == word and elapsed < 5:
         print(f"Excellent! You typed it in {elapsed:.2f} seconds. Your repair is successful!\n")
         return True
@@ -507,6 +540,7 @@ def repair_plane(damage_key, inventory, day):
 
 
 def complete_leg(progress, day):
+    global last_game
     progress += LEG_PROGRESS
     day += TRAVEL_DAYS_PER_LEG
 
@@ -525,7 +559,6 @@ def play_game():
     progress = 0
     day = 1
     inventory = []
-
     # Keep flying new legs until the trip around the world is complete.
     while progress < WORLD_PROGRESS:
         clear_console()
@@ -536,6 +569,7 @@ def play_game():
         if damage_key is not None:
             day = repair_plane(damage_key, inventory, day)
             continue
+        print(day)
 
         progress, day = complete_leg(progress, day)
 
@@ -548,6 +582,7 @@ def main():
     clear_console()
     if show_intro():
         play_game()
+
 
 # Game loop
 
