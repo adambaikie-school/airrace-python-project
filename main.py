@@ -15,6 +15,7 @@ LEG_PROGRESS = 10
 TRAVEL_DAYS_PER_LEG = 2
 SEARCH_CHOICES = 3
 last_game = None
+last_damage = None
 # Each repair problem links a type of damage to the item needed to fix it.
 REPAIR_PROBLEMS = {
     "landing_gear": {
@@ -205,7 +206,11 @@ def handle_takeoff_problem():
 
 def handle_air_event():
     # Randomly selects and handles an in-flight event, returning damage key if any.
-    event = random.choice(AIR_EVENTS)
+    global last_damage
+    available_events = [e for e in AIR_EVENTS if e["damage_key"] != last_damage]
+    if not available_events:
+        available_events = AIR_EVENTS  # Fallback if all are excluded
+    event = random.choice(available_events)
     print(f"{event['message']}\n")
     pause_and_clear()
     return event["damage_key"]
@@ -213,10 +218,14 @@ def handle_air_event():
 
 def choose_flight_problem():
     # Decides if a flight problem occurs and which type.
+    global last_damage
     # Sometimes the danger happens during takeoff, otherwise it happens mid-flight.
     if random.random() < 0.1:
-        return handle_takeoff_problem()
-    return handle_air_event()
+        damage_key = handle_takeoff_problem()
+    else:
+        damage_key = handle_air_event()
+    last_damage = damage_key
+    return damage_key
 
 
 def get_search_options(required_item):
@@ -428,7 +437,7 @@ def play_tic_tac_toe():
 def play_unscramble():
     # Unscramble a word related to aircraft. Returns True if correct.
     # Unscramble letters game. Returns True if player guesses correctly.
-    words = ["ENGINE", "PROPELLER", "WING", "FUEL", "HYDRAULIC", "AIRCRAFT", "TURBINE", "LANDING", "REPAIR"]
+    words = ["ENGINE", "PROPELLER", "WING", "FUEL", "AIRCRAFT", "TURBINE", "LANDING", "REPAIR"]
     word = random.choice(words)
     scrambled = list(word)
     random.shuffle(scrambled)
@@ -437,11 +446,7 @@ def play_unscramble():
     print(f"Scrambled: {''.join(scrambled)}")
     print(f"Hint: The word has {len(word)} letters.\n")
 
-    guess = input("Your guess (or 'hint' for hint): ").upper().strip()
-
-    if guess == "hint":
-        print(f"Hint: This is related to aircraft maintenance.")
-        guess = input("Your guess: ").upper().strip()
+    guess = input("Your guess: ").upper().strip()
 
     if guess == word:
         print(f"Correct! The word is '{word}'. Your repair is successful!\n")
@@ -459,8 +464,6 @@ def play_math_puzzle():
     operations = [
         (f"{num1} + {num2}", num1 + num2),
         (f"{num1} - {num2}", num1 - num2),
-        (f"{num1} * {num2}", num1 * num2),
-        (f"{num1} / {num2}", num1 // num2),
     ]
 
     problem, answer = random.choice(operations)
@@ -594,6 +597,7 @@ def play_game():
         damage_key = choose_flight_problem()
         if damage_key is not None:
             day = repair_plane(damage_key, inventory, day)
+            progress += LEG_PROGRESS  # Add progress after repair to prevent endless loops
             continue
         print(day)
 
@@ -605,10 +609,12 @@ def play_game():
 
 
 def main():
-    # Entry point: shows intro and starts the game if player agrees.
-    clear_console()
-    if show_intro():
-        play_game()
+    # Entry point: shows intro and starts the game if player agrees, loops forever.
+    while True:
+        clear_console()
+        if show_intro():
+            play_game()
+        # After game or no, restart
 
 
 # Game loop
