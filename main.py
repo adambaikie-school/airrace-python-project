@@ -1,3 +1,8 @@
+# Air Race Game
+# A text-based adventure game where you fly around the world in a plane.
+# Deal with random damages, search for parts, and play mini-games to repair.
+# Goal: Complete the circumnavigation as fast as possible.
+
 # Imports
 
 import os
@@ -102,21 +107,25 @@ AIR_EVENTS = [
 
 # Functions
 
-
+# Utility functions for console and timing
 def clear_console():
+    # Clears the console screen.
     os.system("cls" if os.name == "nt" else "clear")
 
 
 def pause(seconds):
+    # Pauses execution for the specified number of seconds.
     time.sleep(seconds)
 
 
 def pause_and_clear(seconds=2):
+    # Pauses for a given time and then clears the console.
     pause(seconds)
     clear_console()
 
 
 def prompt_number(prompt, valid_choices):
+    # Prompts the user for a number until a valid choice is made.
     # Keep asking until the player enters one of the allowed numbers.
     while True:
         try:
@@ -132,16 +141,19 @@ def prompt_number(prompt, valid_choices):
 
 
 def prompt_yes_no(prompt):
+    # Prompts for a yes/no answer and returns True for yes.
     return input(prompt).strip().lower() in {"yes", "y"}
 
 
 def format_inventory(inventory):
+    # Formats the inventory list into a readable string.
     if not inventory:
         return "Empty"
     return ", ".join(inventory)
 
 
 def show_status(day, progress, inventory):
+    # Displays the current game status: day, progress, and inventory.
     print(f"Day: {day}")
     print(f"Trip progress: {progress}% / {WORLD_PROGRESS}%")
     print(f"Inventory: {format_inventory(inventory)}\n")
@@ -149,6 +161,7 @@ def show_status(day, progress, inventory):
 
 
 def show_intro():
+    # Displays the game introduction and instructions.
     print("Welcome to Air Race!\n")
     print("Your goal is to fly around the world as fast as you can.\n")
     print("Each successful flight leg moves you forward, but damage can force you to land and repair the plane.\n")
@@ -169,12 +182,14 @@ def show_intro():
 
 
 def show_takeoff_scene(day, progress):
+    # Shows the scene before takeoff for a new leg.
     print(f"Day {day}")
     print(f"You are preparing for the next leg of the trip. Current progress: {progress}%.\n")
     pause_and_clear()
 
 
 def handle_takeoff_problem():
+    # Handles the takeoff problem scenario and returns damage key if any.
     print("Just after takeoff, a warning light shows the landing gear has not retracted.\n")
     print("1. Ignore it and hope it settles down.")
     print("2. Pull the manual lever harder.")
@@ -189,6 +204,7 @@ def handle_takeoff_problem():
 
 
 def handle_air_event():
+    # Randomly selects and handles an in-flight event, returning damage key if any.
     event = random.choice(AIR_EVENTS)
     print(f"{event['message']}\n")
     pause_and_clear()
@@ -196,6 +212,7 @@ def handle_air_event():
 
 
 def choose_flight_problem():
+    # Decides if a flight problem occurs and which type.
     # Sometimes the danger happens during takeoff, otherwise it happens mid-flight.
     if random.random() < 0.1:
         return handle_takeoff_problem()
@@ -203,6 +220,7 @@ def choose_flight_problem():
 
 
 def get_search_options(required_item):
+    # Generates a list of search options, sometimes including the required item.
     # The correct repair item only appears sometimes, which can push repairs into the next day.
     other_items = [item for item in SEARCH_ITEM_POOL if item != required_item]
 
@@ -215,7 +233,8 @@ def get_search_options(required_item):
     return options
 
 
-def search_for_repair_item(problem_data, inventory, day, ):
+def search_for_repair_item(problem_data, inventory, day):
+    # Handles the search for repair items until the correct one is found.
     required_item = problem_data["required_item"]
 
     while True:
@@ -258,6 +277,7 @@ def search_for_repair_item(problem_data, inventory, day, ):
 
 
 def attempt_repair_with_game(problem_data, day):
+    # Attempts to repair the plane by playing a mini-game, ensuring no repeats.
     global last_game
     # Play a mini-game to repair the plane with the found tool. One try only!
     # Returns day if successful, None if game was lost.
@@ -311,7 +331,9 @@ def attempt_repair_with_game(problem_data, day):
         return None
 
 
+# Mini-games for repairing the plane
 def play_tic_tac_toe():
+    # Plays a game of Tic-Tac-Toe against AI. Returns True if player wins.
     # Simple tic-tac-toe. Player is X, AI is O. Returns True if player wins.
     board = [" " for _ in range(9)]
 
@@ -404,6 +426,7 @@ def play_tic_tac_toe():
 
 
 def play_unscramble():
+    # Unscramble a word related to aircraft. Returns True if correct.
     # Unscramble letters game. Returns True if player guesses correctly.
     words = ["ENGINE", "PROPELLER", "WING", "FUEL", "HYDRAULIC", "AIRCRAFT", "TURBINE", "LANDING", "REPAIR"]
     word = random.choice(words)
@@ -429,6 +452,7 @@ def play_unscramble():
 
 
 def play_math_puzzle():
+    # Solve a random math problem. Returns True if correct.
     # Solve a quick math problem. Returns True if correct.
     num1 = random.randint(10, 50)
     num2 = random.randint(5, 20)
@@ -458,6 +482,7 @@ def play_math_puzzle():
 
 
 def play_memory_game():
+    # Memorize and repeat a sequence of numbers. Returns True if correct.
     # Memory sequence game. Returns True if player repeats the sequence
     sequence = []
 
@@ -491,6 +516,7 @@ def play_memory_game():
 
 
 def play_reaction_test():
+    # Type a displayed word quickly. Returns True if under 5 seconds.
     # Type the word before time runs out. Returns True if fast enough.
     words = ["AIRCRAFT", "TURBINE", "REPAIR", "PROPELLER", "LANDING", "FUEL", "ENGINE"]
     word = random.choice(words)
@@ -515,7 +541,9 @@ def play_reaction_test():
         return False
 
 
+# Main game logic functions
 def repair_plane(damage_key, inventory, day):
+    # Handles plane repair: uses inventory item or searches for one.
     problem_data = REPAIR_PROBLEMS[damage_key]
     required_item = problem_data["required_item"]
 
@@ -537,6 +565,7 @@ def repair_plane(damage_key, inventory, day):
 
 
 def complete_leg(progress, day):
+    # Completes a successful flight leg, advancing progress and day.
     progress += LEG_PROGRESS
     day += TRAVEL_DAYS_PER_LEG
 
@@ -552,6 +581,7 @@ def complete_leg(progress, day):
 
 
 def play_game():
+    # Main game loop: fly legs, handle damages until you travel the world.
     progress = 0
     day = 1
     inventory = []
@@ -575,6 +605,7 @@ def play_game():
 
 
 def main():
+    # Entry point: shows intro and starts the game if player agrees.
     clear_console()
     if show_intro():
         play_game()
