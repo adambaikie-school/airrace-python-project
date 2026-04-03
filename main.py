@@ -9,7 +9,6 @@ WORLD_PROGRESS = 100
 LEG_PROGRESS = 10
 TRAVEL_DAYS_PER_LEG = 2
 SEARCH_CHOICES = 3
-FULL_GAMES = ["play_tic_tac_toe", "play_unscramble", "play_math_puzzle", "play_memory_game", "play_reaction_test"]
 last_game = None
 # Each repair problem links a type of damage to the item needed to fix it.
 REPAIR_PROBLEMS = {
@@ -275,10 +274,7 @@ def attempt_repair_with_game(problem_data, day):
         "Reaction Test": play_reaction_test,
     }
 
-    print(games)
     if last_game is not None:
-        print(f"Last game played: {last_game}")
-
         # Remove the last game from the pool so it can't be picked twice in a row
         saved_function = games.pop(last_game)
 
@@ -291,18 +287,19 @@ def attempt_repair_with_game(problem_data, day):
         # Update last_game to the new game we just picked
         last_game = name
 
-        # Run the function we just picked!
-        game_function()
-
+        # Play the game
+        result = game_function()
     else:
         # If no game was played yet, just pick a random one
-        name, game_function = random.choice(list(games.items()))
+        name, game = random.choice(list(games.items()))
         last_game = name
-        game_function()
+
+        # Play the game
+        result = game()
     time.sleep(8)
 
     clear_console()
-    if game():
+    if result:
         # Game won - repair succeeds
         print(problem_data["repair_text"])
         pause_and_clear(3)
@@ -540,7 +537,6 @@ def repair_plane(damage_key, inventory, day):
 
 
 def complete_leg(progress, day):
-    global last_game
     progress += LEG_PROGRESS
     day += TRAVEL_DAYS_PER_LEG
 
